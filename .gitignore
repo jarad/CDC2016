@@ -16,6 +16,7 @@
 
 # RStudio files
 .Rproj.user/
+CDC2016.Rproj
 
 # produced vignettes
 vignettes/*.html
@@ -27,7 +28,22 @@ vignettes/*.pdf
 # knitr and R markdown default cache directories
 /*_cache/
 /cache/
+figure/
 
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+.Rproj.user
+
+# LaTeX files
+*.log
+*.nav
+*.snm
+*.toc
+*.vrb
+*.tex
+*.synctex.gz
+*concordance.tex
+
+# other files
+CDC2016.R
