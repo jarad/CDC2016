@@ -1,4 +1,4 @@
-\documentclass{beamer}
+\documentclass[handout]{beamer}
 
 \usetheme{AnnArbor}
 \usecolortheme{beaver}
@@ -53,14 +53,14 @@ set.seed(2)
 \vspace{-0.2in}
 
 \begin{center}
-\includegraphics{../Images/Chapter2/stateSpacePic}
+\includegraphics{figs/stateSpacePic}
 \end{center}
 
 \pause
 
 Let 
 \begin{itemize}
-\item $X_t$ represent the latent state of the outbreak at time $t$, \pause e.g. the proportion of people with ILI
+\item $X_t$ represent the latent state of the outbreak at time $t$,  e.g. the proportion of people with ILI \pause
 \item $y_t$ represent the observed data at time $t$ \pause
 \end{itemize}
 
@@ -159,7 +159,7 @@ g + geom_point(data = d, aes(x=x,y=sir))
 \begin{frame}
 \frametitle{ILI-Net and Google Flu Trends}
 \begin{center}
-\includegraphics{../Images/Chapter3/data_tsplots}
+\includegraphics{figs/data_tsplots}
 \end{center}
 \end{frame}
 
@@ -229,7 +229,7 @@ The hierarchical model provides a data-based way to borrow information across se
 \begin{frame}
 \frametitle{Estimating (log of) peak week}
 \begin{center}
-\includegraphics{../Images/Chapter4/gamma2Posts}
+\includegraphics{figs/gamma2Posts}
 \end{center}
 \end{frame}
 
@@ -237,7 +237,7 @@ The hierarchical model provides a data-based way to borrow information across se
 \begin{frame}
 \frametitle{One- (three-) week forecasts}
 \begin{center}
-\includegraphics{../Images/Chapter3/allSeason_foreB}
+\includegraphics{figs/allSeason_foreB}
 \end{center}
 \end{frame}
 
@@ -246,12 +246,16 @@ The hierarchical model provides a data-based way to borrow information across se
 \begin{frame}[fragile]
 \frametitle{R packages and apps}
 
-<<eval=FALSE, echo=TRUE>>=
+<<eval=FALSE, echo=TRUE, size='scriptsize'>>=
+# This presentation
+browseURL("https://github.com/jarad/CDC2016") # Code
+browseURL("") # Presentation
+
 # NIMBLE
 browseURL("http://r-nimble.org/")
 
 # Convert back and forth from MMWR weeks
-devtools::install_github('jarad/MMWRweek')
+install.packages("MMWRweek")
 library(MMWRweek)
 MMWRweek(as.Date(Sys.time()))
 
