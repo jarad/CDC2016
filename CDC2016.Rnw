@@ -64,7 +64,7 @@ Let
 \item $y_t$ represent the observed data at time $t$ \pause
 \end{itemize}
 
-The arrows describe \pause the 
+The arrows describe the 
 \[ \begin{array}{ll}
 \mbox{evolution equation:} & x_t \sim p(x_t|x_{t-1},\theta) \pause \\
 \mbox{observation equation:} & y_t \sim p(y_t|x_t,\phi). \\ 
@@ -214,8 +214,8 @@ x_{s,t} &= \theta_{s,4} + e^{\theta_{s,3}} \phi\left(\frac{t-e^{\theta_{s,1}}}{e
 \pause
 Hierarchical model:
 \[ \begin{array}{rl}
-\sigma_{s,\cdot}^2 &\ind LN(\alpha_\cdot,\beta_\cdot) \pause \\
-\theta_s &\ind N(\mu,\Sigma)
+\sigma_{s,\cdot}^2 &\ind LN(\alpha_\cdot,\beta_\cdot)  \\
+\theta_s &\ind N(\mu,\mathrm{\Sigma})
 \end{array} \]
 
 \pause
