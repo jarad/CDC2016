@@ -248,8 +248,8 @@ The hierarchical model provides a data-based way to borrow information across se
 
 <<eval=FALSE, echo=TRUE, size='scriptsize'>>=
 # This presentation
-browseURL("https://github.com/jarad/CDC2016") # Code
-browseURL("") # Presentation
+browseURL("https://github.com/jarad/CDC2016")                # Code
+browseURL("http://www.jarad.me/research/presentations.html") # Presentation
 
 # NIMBLE
 browseURL("http://r-nimble.org/")
