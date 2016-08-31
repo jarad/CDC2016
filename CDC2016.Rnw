@@ -1,0 +1,265 @@
+\documentclass{beamer}
+
+\usetheme{AnnArbor}
+\usecolortheme{beaver}
+
+\setlength{\unitlength}{\textwidth}  % measure in textwidths
+\usepackage[normalem]{ulem}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{enumerate items}[default]
+\setbeamertemplate{enumerate subitem}{\alph{enumii}.}
+\setbeamertemplate{enumerate subsubitem}{\roman{enumiii}.}
+\setkeys{Gin}{width=\textwidth}
+
+\author[Niemi]{Jarad Niemi and Nicholas Michaud}
+\title{Hierarchical modeling and data fusion}
+\institute{Iowa State University}
+\date{\today}
+
+\newcommand{\ind}{\stackrel{ind}{\sim}}
+
+\begin{document}
+
+<<options, results='hide', echo=FALSE, purl=FALSE>>=
+opts_chunk$set(comment=NA, 
+               fig.width=7, fig.height=5, 
+               size='tiny', 
+               out.width='0.8\\textwidth', 
+               fig.align='center', 
+               message=FALSE,
+               echo=FALSE,
+               cache=TRUE)
+options(width=120)
+@
+
+<<libraries, message=FALSE, warning=FALSE>>=
+library(dplyr)
+library(ggplot2)
+@
+
+<<set_seed>>=
+set.seed(2)
+@
+
+\frame{\maketitle}
+
+\section{Model}
+\subsection{State-space model}
+\begin{frame}
+\frametitle{State-space model}
+\setkeys{Gin}{width=0.6\textwidth}
+
+\vspace{-0.2in}
+
+\begin{center}
+\includegraphics{../Images/Chapter2/stateSpacePic}
+\end{center}
+
+\pause
+
+Let 
+\begin{itemize}
+\item $X_t$ represent the latent state of the outbreak at time $t$, \pause e.g. the proportion of people with ILI
+\item $y_t$ represent the observed data at time $t$ \pause
+\end{itemize}
+
+The arrows describe \pause the 
+\[ \begin{array}{ll}
+\mbox{evolution equation:} & x_t \sim p(x_t|x_{t-1},\theta) \pause \\
+\mbox{observation equation:} & y_t \sim p(y_t|x_t,\phi). \\ 
+\end{array} \]
+
+\end{frame}
+
+
+\subsection{Evolution equation}
+\begin{frame}
+\frametitle{Evolution equation}
+
+\begin{itemize}
+\item Deterministic models, e.g. 
+
+\[ 
+x_t = f(t;\theta) \pause = \theta_4 + e^{\theta_3} \phi\left(\frac{t-e^{\theta_1}}{e^{\theta_2}}\right)
+\]
+
+\pause
+\vfill
+
+\item Stochastic models
+
+\[ \begin{array}{rl}
+x_t &= (s_t,i_t,r_t) \pause \\
+s_t &= s_{t-1} - \overrightarrow{si}_t \\
+i_t &= i_{t-1} + \overrightarrow{si}_t - \overrightarrow{ir}_t \\
+r_t &= r_{t-1} \phantom{- \overrightarrow{si}_t} + \overrightarrow{ir}_t \pause \\
+\overrightarrow{si}_t & \sim Po(\theta_1 s_t i_t) \\
+\overrightarrow{ir}_t & \sim Po(\theta_2 i_t) \\
+\end{array} \]
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Example evolution}
+
+<<evolution_fig>>=
+theta = c(0,1,1,0.1)
+d = data.frame(x = seq(-3,3,length=31)) %>%
+  mutate(y = dnorm(x,theta[1],theta[2])*theta[3] + theta[4],
+         sir = y+rnorm(length(y),0,0.05))
+
+
+g = ggplot(d, aes(x,y)) +
+  geom_line() + 
+  theme_bw() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+  labs(x="week", y="latent ILI level") + 
+  ylim(min(d$sir),max(d$sir)) 
+
+sz = 8
+g + geom_vline(xintercept = theta[1], color="gray", linetype=2) + 
+  geom_hline(yintercept = theta[4], color="gray", linetype=2) + 
+  geom_segment(data= data.frame(x = theta[1]-1.5*theta[2],
+                          xend = theta[1]+1.5*theta[2],
+                          y    = theta[4]*2, 
+                          yend = theta[4]*2), 
+               aes(x=x,xend=xend,y=y,yend=yend),
+               color="gray", linetype=2) + 
+  geom_segment(data= data.frame(x = theta[1]+2*theta[2],
+                          xend = theta[1]+2*theta[2],
+                          y    = theta[4], 
+                          yend = 0.5), 
+               aes(x=x,xend=xend,y=y,yend=yend),
+               color="gray", linetype=2) + 
+  annotate('text', x = 0, y = .4, label = "e^{theta[1]}",parse = TRUE, size=sz) +
+  annotate('text', x = -1, y = .2, label = "e^{theta[2]}",parse = TRUE, size=sz) +
+  annotate('text', x = 2, y = .4, label = "e^{theta[3]}",parse = TRUE, size=sz) +
+  annotate('text', x = -2, y = .1, label = "theta[4]",parse = TRUE, size=sz) 
+@
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Example evolution}
+
+<<evolution_stochastic_fig, dependson='evolution_fig'>>=
+g + geom_point(data = d, aes(x=x,y=sir))
+@
+
+\end{frame}
+
+
+\subsection{Observation equation}
+\begin{frame}
+\frametitle{ILI-Net and Google Flu Trends}
+\begin{center}
+\includegraphics{../Images/Chapter3/data_tsplots}
+\end{center}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Observation models}
+
+CDC ILI Net data ($I_t$ is logit of proportion):
+\[ 
+I_t = x_t + e_t, \quad e_t\ind N(0,\sigma_I^2) 
+\]
+
+\vspace{0.1in} \pause
+
+Data fusion:
+\begin{itemize}
+\item Google Flu Trends
+\item Twitter symptom tweeting
+\item Wikipedia editing
+\end{itemize}
+
+\vspace{0.1in} \pause
+
+Biased data (generically $B_t$) model:
+\[
+B_t = \beta_t + x_t + w_t, \quad w_t \ind N\left(0,\sigma_B^2\right) 
+\]
+\pause
+Possible models for bias:
+\[ \begin{array}{rll}
+\beta_t &= \rho \beta_{t-1} + v_t, & v_t \ind N(0,\tau^2) \pause \\
+\beta_t &= \rho [I_{t-1}-x_{t-1}] + v_t, & v_t \ind N(0,\tau^2)
+\end{array} \]
+\end{frame}
+
+
+\subsection{Hierarchical model}
+\begin{frame}
+\frametitle{Hierarchical model}
+
+Each season has its own parameters, but we want to borrow information across seasons.
+
+\vspace{0.1in} \pause
+
+Season-specific model:
+\[ \begin{array}{ll}
+y_{s,t} = \left[ \begin{array}{c} I_{s,t} \\ B_{s,t} \end{array} \right] 
+&\ind N\left(\left[ \begin{array}{r} x_{s,t} \\ \beta_{s,t}+x_{s,t} \end{array} \right], \left[ \begin{array}{cc} \sigma_{s,I}^2 & 0 \\ 0 & \sigma_{s,B}^2 \end{array} \right] \right) \\
+\beta_{s,t} &\ind N(\rho_s \beta_{s,t-1},\tau_s^2)  \\
+x_{s,t} &= \theta_{s,4} + e^{\theta_{s,3}} \phi\left(\frac{t-e^{\theta_{s,1}}}{e^{\theta_{s,2}}}\right)
+\end{array} \]
+\pause
+Hierarchical model:
+\[ \begin{array}{rl}
+\sigma_{s,\cdot}^2 &\ind LN(\alpha_\cdot,\beta_\cdot) \pause \\
+\theta_s &\ind N(\mu,\Sigma)
+\end{array} \]
+
+\pause
+The hierarchical model provides a data-based way to borrow information across seasons.  
+
+\end{frame}
+
+
+\section{Performance}
+\subsection{Peak week}
+\begin{frame}
+\frametitle{Estimating (log of) peak week}
+\begin{center}
+\includegraphics{../Images/Chapter4/gamma2Posts}
+\end{center}
+\end{frame}
+
+\subsection{Forecasts}
+\begin{frame}
+\frametitle{One- (three-) week forecasts}
+\begin{center}
+\includegraphics{../Images/Chapter3/allSeason_foreB}
+\end{center}
+\end{frame}
+
+
+\section{R packages and apps}
+\begin{frame}[fragile]
+\frametitle{R packages and apps}
+
+<<eval=FALSE, echo=TRUE>>=
+# NIMBLE
+browseURL("http://r-nimble.org/")
+
+# Convert back and forth from MMWR weeks
+devtools::install_github('jarad/MMWRweek')
+library(MMWRweek)
+MMWRweek(as.Date(Sys.time()))
+
+# Visualize CDC data
+shiny::runGitHub('NLMichaud/WeeklyCDCPlot')
+browseURL("https://gallery.shinyapps.io/CDCPlot/") # data not updated
+@
+
+\end{frame}
+
+\end{document}
